@@ -12,7 +12,8 @@ Vagrant.configure(2) do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://atlas.hashicorp.com/search.
-  config.vm.box = "ubuntu/trusty64"
+  #config.vm.box = "ubuntu/trusty64"
+  config.vm.box = "debian/jessie64"
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -44,7 +45,7 @@ Vagrant.configure(2) do |config|
   # Example for VirtualBox:
   #
   config.vm.provider "virtualbox" do |vb|
-      vb.memory = "300"
+      vb.memory = "250"
       vb.name = "proj1"
   end
   #
@@ -64,9 +65,15 @@ Vagrant.configure(2) do |config|
   config.vm.provision "shell", inline: <<-SHELL
    apt-get update
    apt-get install -y apache2 php5
+   curl -sS https://getcomposer.org/installer | php
+   mv composer.phar /usr/local/bin/composer
+   cd /vagrant/
+   composer self-update
+   composer update
    cp /vagrant/config/000-default.conf /etc/apache2/sites-enabled/
    cp /vagrant/config/ports.conf /etc/apache2/
    cp /vagrant/config/apache2.conf /etc/apache2/
+   ln -s /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled/
    /etc/init.d/apache2 restart
   SHELL
 end
