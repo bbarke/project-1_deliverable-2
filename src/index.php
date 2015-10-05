@@ -12,30 +12,30 @@ $app = new Application();
 $app['debug'] = true;
 
 $inventory = [
-    '322323' => [
-        'name' => 'Bubbleicous',
-        'desc' => 'A yummy bubble gum',
-        'rank' => 'high'
-    ],
-    '83573897539' => [
-        'name' => 'Blow Pop',
-        'desc' => 'Tasty bubble gum inside a lolipop',
-        'rank' => 'super high'
-    ]
+  '322323' => [
+    'name' => 'Bubbleicous',
+    'desc' => 'A yummy bubble gum',
+    'rank' => 'high'
+  ],
+  '83573897539' => [
+    'name' => 'Blow Pop',
+    'desc' => 'Tasty bubble gum inside a lolipop',
+    'rank' => 'super high'
+  ]
 ];
 
 
 $notes = [
-    '322323' => [
-        'name' => 'Bubbleicous',
-        'desc' => 'A yummy bubble gum',
-        'rank' => 'high'
-    ],
-    '83573897539' => [
-        'name' => 'Blow Pop',
-        'desc' => 'Tasty bubble gum inside a lolipop',
-        'rank' => 'super high'
-    ]
+  '1' => [
+    'name' => 'Sprinkler',
+    'body' => 'Replace Sprinkler Body',
+    'tags' => ['Outside', 'Yard Work', 'Summer']
+  ],
+  '2' => [
+    'name' => 'Brakes',
+    'body' => 'Fix the brakes on truck',
+    'tags' => ['Outside', 'Vehicle']
+  ]
 ];
 
 $app->get('/', function () {
@@ -51,10 +51,65 @@ $app->get('/barrell', function () use ($inventory) {
   return $response;
 });
 
+$app->post('/notes', function (Application $app, Request $request) use ($notes) {
+
+  $contentTypeValid = in_array(
+    'application/json',
+    $request->getAcceptableContentTypes()
+  );
+
+  if (!$contentTypeValid) {
+    $app->abort(406, 'Client must accept content type of "application/json"');
+  }
+
+  $content = json_decode($request->getContent());
+  $newId = uniqid();
+
+  $notes[$newId] = [
+    'name' => $content->name,
+    'body' => $content->body,
+    'tags' => $content->tags
+  ];
+
+  return new Response(
+    json_encode($notes),
+    201,
+    [
+      'Content-Type' => 'application/json',
+      'Location' => 'http://localhost:8888/notes/' . $newId
+    ]
+  );
+});
+
+$app->get('/notes', function (Application $app) use ($notes) {
+
+  return new Response(
+    json_encode($notes),
+    201,
+    ['content-type' => 'application/json']
+  );
+});
+
+$app->get('/notes/{id}', function (Application $app, Request $request, $id) use ($notes) {
+
+
+  $singleNote = $notes[$id];
+
+  if (!isset($singleNote)) {
+    $app->abort(404, 'Note with ID {$id} does not exist.');
+  }
+
+  return new Response(
+    json_encode($singleNote),
+    201,
+    ['content-type' => 'application/json']
+  );
+});
+
 
 $app->delete('/notes/{id}', function (Application $app, $id) use ($notes) {
   if (!isset($notes[$id])) {
-    $app->abort(404, 'Note with ID {$id} does not exist.');
+    $app->abort(404, 'Note with ID {' . $id . '} does not exist.');
   }
 
   unset($notes{$id});
@@ -66,8 +121,8 @@ $app->delete('/notes/{id}', function (Application $app, $id) use ($notes) {
 $app->put('/notes/{id}', function (Application $app, Request $request, $id) use ($notes) {
 
   $contentTypeValid = in_array(
-      'application/json',
-      $request->getAcceptableContentTypes()
+    'application/json',
+    $request->getAcceptableContentTypes()
   );
 
   if (!$contentTypeValid) {
@@ -78,61 +133,15 @@ $app->put('/notes/{id}', function (Application $app, Request $request, $id) use 
   $newId = uniqid();
 
   $notes[$newId] = [
-      'name' => $content->name,
-      'body' => $content->body,
-      'tags' => $content->tags
+    'name' => $content->name,
+    'body' => $content->body,
+    'tags' => $content->tags
   ];
 
   return new Response(
-      json_encode($notes),
-      201,
-      ['Location' => 'http://localhost:8888/notes/' . $newId]
-  );
-});
-
-$app->post('/notes', function (Application $app, Request $request, $id) use ($notes) {
-
-  $contentTypeValid = in_array(
-      'application/json',
-      $request->getAcceptableContentTypes()
-  );
-
-  if (!$contentTypeValid) {
-    $app->abort(406, 'Client must accept content type of "application/json"');
-  }
-
-  $content = json_decode($request->getContent(), true);
-  $newId = uniqid();
-
-  $notes[$newId] = [
-      'name' => $content->name,
-      'body' => $content->body,
-      'tags' => $content->tags
-  ];
-
-  return new Response(
-      json_encode($notes),
-      201,
-      ['Location' => 'http://localhost:8888/notes/' . $newId]
-  );
-});
-
-$app->get('/notes', function (Application $app) use ($notes) {
-
-  return new Response(
-      json_encode($notes),
-      201,
-      ['content-type' => 'application/json']
-  );
-});
-
-
-$app->get('/notes', function (Application $app) use ($notes) {
-
-  return new Response(
-      json_encode($notes),
-      201,
-      ['content-type' => 'application/json']
+    json_encode($notes),
+    201,
+    ['Location' => 'http://localhost:8888/notes/' . $newId]
   );
 });
 
